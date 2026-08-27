@@ -18,6 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.config import settings
+from app.logging_config import get_logger
 from app.models import (
     Business,
     Deal,
@@ -30,9 +31,18 @@ from app.models import (
     ReplyClass,
 )
 
+log = get_logger(__name__)
+
 TARGET_REVENUE = 1000.00
-DEFAULT_EXCEL_PATH = Path("data/MASTER_CRM_OPERATIONS.xlsx")
-DEFAULT_CSV_PATH = Path("data/MASTER_CRM_OPERATIONS.csv")
+
+# Resolved against the repo root, not the working directory. As bare relative
+# paths these resolved differently per process: the test suite runs from
+# `backend/`, so a sync during tests wrote fixture data ("Rossi's Trattoria",
+# reply received, $1,500 weighted pipeline) into `backend/data/` where it read
+# as a real CRM export. Same convention as `.env` and the SQLite path.
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+DEFAULT_EXCEL_PATH = _REPO_ROOT / "data" / "MASTER_CRM_OPERATIONS.xlsx"
+DEFAULT_CSV_PATH = _REPO_ROOT / "data" / "MASTER_CRM_OPERATIONS.csv"
 
 
 def col_idx_to_name(idx: int) -> str:
@@ -439,6 +449,14 @@ class MasterExcelSync:
         csv_path: Path = DEFAULT_CSV_PATH,
     ) -> tuple[str, str]:
         """Save synchronized Excel workbook and CSV to disk."""
+        # The suite exercises this method with fixture data. Writing that to the
+        # real export path produces a CRM file full of businesses that do not
+        # exist, indistinguishable from a genuine one. Tests that pass their own
+        # tmp_path are unaffected — only the shared production target is refused.
+        if settings.env == "test" and Path(excel_path) == DEFAULT_EXCEL_PATH:
+            log.debug("excel_sync.refused_production_path_in_test")
+            return str(excel_path), str(csv_path)
+
         sheets_data = self.generate_workbook_data()
         xlsx_bytes = build_excel_workbook_bytes(sheets_data)
 
@@ -454,17 +472,23 @@ class MasterExcelSync:
             writer = csv.writer(f)
             writer.writerows(master_rows)
 
-        # Also mirror to Mail/data and exports/ if they exist
-        for alt_dir in (Path("Mail/data"), Path("exports")):
-            if alt_dir.exists():
-                try:
-                    with open(alt_dir / "MASTER_CRM_OPERATIONS.xlsx", "wb") as f:
-                        f.write(xlsx_bytes)
-                    with open(alt_dir / "MASTER_CRM_OPERATIONS.csv", "w", newline="", encoding="utf-8") as f:
-                        writer = csv.writer(f)
-                        writer.writerows(master_rows)
-                except Exception:
-                    pass
+        # Mirror to exports/ so there is one predictable place to open the file
+        # from. Resolved against the repo root for the same reason as above, and
+        # failures are logged rather than swallowed — a mirror that silently
+        # stops updating is worse than one that never existed, because the stale
+        # copy still looks current.
+        # Never under test: the mirror target is a fixed shared path, so a suite
+        # run writing its fixtures here leaves a CRM export full of businesses
+        # that do not exist — which is how "HyperPulse Media" and "Iron Peak Gym"
+        # ended up in exports/ looking like real pipeline output.
+        mirror = _REPO_ROOT / "exports"
+        if settings.env != "test" and mirror.exists():
+            try:
+                (mirror / "MASTER_CRM_OPERATIONS.xlsx").write_bytes(xlsx_bytes)
+                with open(mirror / "MASTER_CRM_OPERATIONS.csv", "w", newline="", encoding="utf-8") as f:
+                    csv.writer(f).writerows(master_rows)
+            except OSError as exc:
+                log.warning("excel_sync.mirror_failed", path=str(mirror), error=str(exc))
 
         return str(excel_path), str(csv_path)
 

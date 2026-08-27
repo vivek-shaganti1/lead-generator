@@ -79,7 +79,27 @@ class GroqClient:
         stop=stop_after_attempt(3),
         reraise=True,
     )
-    def chat(self, messages: list[dict], *, json_mode: bool = True, max_tokens: int = 400) -> str:
+    def chat(
+        self,
+        messages: list[dict],
+        *,
+        json_mode: bool = True,
+        max_tokens: int = 400,
+        schema: dict | None = None,
+        schema_name: str = "response",
+    ) -> str:
+        """Call the model.
+
+        Passing *schema* (a JSON Schema) switches on constrained decoding, so the
+        model can only emit fields and enum values we defined. That matters for
+        the adversarial reviewers in :mod:`app.services.ai.gap_consensus`: asked
+        for "REFUTED" or "STANDS" in prose alone, current models happily answer
+        "cannot verify", which we then have to discard as off-contract.
+
+        Note the token budget. Reasoning models spend completion tokens thinking
+        before the JSON appears; too small a `max_tokens` truncates the object
+        mid-string and the whole call fails validation rather than degrading.
+        """
         if not self._api_key:
             raise GroqError("GROQ_API_KEY is not configured")
         payload: dict = {
@@ -88,7 +108,12 @@ class GroqClient:
             "temperature": 0.1,
             "max_tokens": max_tokens,
         }
-        if json_mode:
+        if schema is not None:
+            payload["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {"name": schema_name, "strict": True, "schema": schema},
+            }
+        elif json_mode:
             payload["response_format"] = {"type": "json_object"}
 
         response = self._http().post(

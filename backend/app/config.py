@@ -114,6 +114,14 @@ class Settings(BaseSettings):
     dry_run: bool = True  # never actually delivers mail until explicitly disabled
     track_opens: bool = True  # embed the 1x1 open-tracking pixel in outbound HTML
 
+    # ---- deliverability circuit breaker ----
+    # Volume caps answer "are we sending too fast"; they cannot answer "is this
+    # mail arriving". These do. Above max_bounce_rate the breaker opens and all
+    # sending stops until a human clears it. 2% is the industry danger line;
+    # a real batch on this account once ran at 37.5%.
+    max_bounce_rate: float = 0.02
+    bounce_rate_min_sample: int = 20  # don't judge a rate on a handful of sends
+
     # ---- follow-ups ----
     followup_enabled: bool = True
     followup_delays_days: str = "3,7"   # comma separated, one per follow-up step
@@ -135,7 +143,7 @@ class Settings(BaseSettings):
 
     # ---- AI ----
     groq_api_key: str = ""
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "openai/gpt-oss-120b"
     groq_base_url: str = "https://api.groq.com/openai/v1"
     ai_classify_replies: bool = True
     ai_personalize_copy: bool = False

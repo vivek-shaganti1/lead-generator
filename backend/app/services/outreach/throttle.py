@@ -182,6 +182,15 @@ def in_send_window(tz_name: str, now: datetime | None = None) -> SendSlot:
 def check_send_slot(db: Session, lead, now: datetime | None = None) -> SendSlot:
     now = now or utcnow()
 
+    # Deliverability comes first. Every other check below is about pacing; this
+    # one is about whether we should be sending at all. A list that is bouncing
+    # does not become safe by being sent more slowly.
+    from app.services.outreach import circuit_breaker
+
+    breaker = circuit_breaker.check(db)
+    if breaker.open:
+        return SendSlot(False, f"circuit breaker open — {breaker.reason}")
+
     cap = todays_cap(db)
     used = sent_today(db, now)
     if used >= cap:
