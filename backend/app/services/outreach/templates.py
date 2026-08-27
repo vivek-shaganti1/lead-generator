@@ -14,7 +14,7 @@ from jinja2 import StrictUndefined, TemplateError
 from jinja2.sandbox import SandboxedEnvironment
 
 from app.config import settings
-from app.services.compliance.unsubscribe import unsubscribe_url
+from app.services.compliance.unsubscribe import unsubscribe_instruction, unsubscribe_url
 
 _env = SandboxedEnvironment(undefined=StrictUndefined, autoescape=False, trim_blocks=True)
 
@@ -63,7 +63,7 @@ FOOTER_TEXT = """
 {company_name}
 {company_address}
 You received this one-off message because {business_name} is listed publicly as a {category} business.
-Unsubscribe and never hear from us again: {unsub}
+{unsub}
 """
 
 
@@ -77,6 +77,71 @@ class RenderedEmail:
 def presence_line(presence: str, name: str, category: str, city: str) -> str:
     template = PRESENCE_LINES.get(presence, PRESENCE_LINES["UNKNOWN"])
     return template.format(name=name, category=category or "business", city=city or "your area")
+
+
+# Human phrasing for a confirmed gap. The template must never print an enum at
+# a recipient — "ONLINE_ORDERING" in an email is a tell that nobody wrote it.
+GAP_PHRASES: dict[str, tuple[str, str]] = {
+    # capability -> (what they cannot do today, what it costs them)
+    "ONLINE_BOOKING": (
+        "there's no way to book from the site — every appointment has to come "
+        "through a phone call",
+        "bookings taken while you're closed",
+    ),
+    "ONLINE_ORDERING": (
+        "customers can't order from the site directly",
+        "orders that currently go through commission-charging apps",
+    ),
+    "MENU_OR_PRICING": (
+        "the menu and prices aren't on the site",
+        "customers who decide elsewhere because they couldn't see what you offer",
+    ),
+    "QUOTE_REQUEST": (
+        "there's no way to request a quote from the site",
+        "enquiries that arrive while you're on a job",
+    ),
+    "CONTACT_FORM": (
+        "there's no contact form — the only route is to find an address and write one",
+        "enquiries lost to the extra step",
+    ),
+    "ECOMMERCE": (
+        "there's no way to buy from the site",
+        "sales outside opening hours",
+    ),
+    "ONLINE_PAYMENTS": (
+        "deposits and payments can't be taken online",
+        "time spent chasing payment after the fact",
+    ),
+    "MOBILE_RESPONSIVE": (
+        "the site isn't built for phones, which is where most local searches happen",
+        "visitors who leave rather than pinch and zoom",
+    ),
+    "REVIEWS": (
+        "your reviews aren't shown on the site",
+        "trust you've already earned but aren't displaying",
+    ),
+}
+
+
+def _gap_context(business) -> dict:
+    """Expose the confirmed gap to templates, in plain English.
+
+    Reads what :mod:`app.services.ai.gap_consensus` actually agreed on, stored
+    on the business at qualification time. Only a CONFIRMED gap is exposed —
+    anything uncertain leaves these blank so the template falls back to generic
+    copy rather than asserting something two reviewers could not agree on.
+    """
+    blank = {"gap": "", "gap_problem": "", "gap_cost": "", "has_gap": False}
+    provenance = getattr(business, "data_provenance", None) or {}
+    consensus = provenance.get("gap_consensus") or {}
+    if consensus.get("verdict") != "CONFIRMED":
+        return blank
+
+    capability = consensus.get("capability", "")
+    problem, cost = GAP_PHRASES.get(capability, ("", ""))
+    if not problem:
+        return blank
+    return {"gap": capability, "gap_problem": problem, "gap_cost": cost, "has_gap": True}
 
 
 def build_context(lead, business, *, presence: str = "MISSING", category_label: str = "") -> dict:
@@ -96,11 +161,13 @@ def build_context(lead, business, *, presence: str = "MISSING", category_label: 
         "country": business.country_code or "",
         "presence": presence,
         "presence_line": presence_line(presence, business.name, label, city),
+        **_gap_context(business),
         "sender_name": settings.sender_name,
         "company_name": settings.company_name,
         "company_website": settings.company_website,
         "calendar_link": settings.calendar_link,
         "unsubscribe_url": unsubscribe_url(lead.unsubscribe_token),
+        "unsubscribe_instruction": unsubscribe_instruction(lead.unsubscribe_token),
     }
 
 
@@ -283,7 +350,10 @@ def render_email(
             company_address=settings.company_address,
             business_name=context.get("business_name", "this business"),
             category=context.get("category_label", "local"),
-            unsub=context["unsubscribe_url"],
+            # Phrased for whichever opt-out route is actually usable: a link
+            # when we have a reachable host, "reply unsubscribe" when we do not.
+            unsub=context.get("unsubscribe_instruction")
+            or f"Unsubscribe: {context['unsubscribe_url']}",
         )
     return RenderedEmail(subject=subject, text=body.strip(), html=html_version)
 
