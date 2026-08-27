@@ -76,18 +76,36 @@ class SalesCopywriter:
                 f"Best,\nKSV Web & AI Solutions Team"
             )
 
-        # --- 1. GLOBAL TECH AGENCIES & STARTUPS (UK, Canada, Australia) ---
-        elif "Tech-Agencies" in campaign:
-            subject_1 = f"Quick question for {business} (AI & Full-Stack Development Capacity)"
+        # --- 1. GLOBAL TECH AGENCIES & CONSULTANCIES ---
+        if "Tech-Agencies" in campaign or "Technology" in industry or "Software" in industry or "Cloud" in industry:
+            subject_1 = f"Strategic Engineering & AI Development Capacity for {business}"
             body_1 = (
                 f"Hi {first_name},\n\n"
-                f"Came across {business} in {city}—really impressed by your digital work and track record across {country}!\n\n"
-                f"I'm reaching out because we help growing agencies and tech teams scale their development velocity without adding high local payroll overhead.\n\n"
-                f"We engineer high-performance **custom Web Applications (Next.js/React), Mobile Apps (iOS/Android/Flutter)**, and **Embedded AI Automation Models**:\n\n"
-                f"⚡ Core Capabilities for {business}:\n"
-                f"• Full-Stack Web & Mobile App Builds: Production-ready MVP and custom software delivery in days\n"
-                f"• Custom AI Models & Workflow Bots: 24/7 client intake bots, automated lead qualification, and internal workflow automation\n"
-                f"• High-Performance Engineering: Sub-second load times, 100/100 Core Web Vitals, and modern scalable architecture\n"
+                f"I recently came across {business} while reviewing leading technology and digital firms in {city}. Your track record for delivering quality solutions across {country} stands out, and I wanted to reach out with a strategic proposition.\n\n"
+                f"We collaborate with ambitious agency founders and technology leaders to expand their development bandwidth and product delivery capacity without the burden of heavy local payroll overhead.\n\n"
+                f"Here is how we typically help teams like {business} scale:\n\n"
+                f"1. On-Demand Full-Stack & Mobile Engineering\n"
+                f"We provide dedicated, production-ready engineering support across modern web platforms (React, Next.js, TypeScript, Node.js) and native mobile apps (iOS, Android, Flutter) to help you deliver client projects on schedule.\n\n"
+                f"2. Custom AI Workflows & Intelligent Client Intake\n"
+                f"We build bespoke AI automation modules, intelligent inquiry qualification bots, and internal workflow tools that streamline client onboarding and reduce manual administrative overhead.\n\n"
+                f"3. High-Performance Architecture & Optimization\n"
+                f"Every system we engineer is built for extreme speed, flawless security, and effortless scalability—ensuring your clients experience sub-second responsiveness and zero technical debt.\n\n"
+                f"We have put together an interactive architectural preview and portfolio concept specifically tailored for {business}.\n\n"
+                f"Would you or your leadership team be open to a brief 10-minute visual walkthrough this Thursday at 11:00 AM, or sometime next week?\n\n"
+                f"Simply reply to this email, and I will gladly share the preview.\n\n"
+                f"Best regards,\n\n"
+                f"KSV Web & AI Solutions Team\n"
+                f"Enterprise Web & AI Architecture\n"
+                f"Email: ksvdevlopers@gmail.com"
+            )
+            subject_2 = f"Re: Strategic Engineering & AI Development Capacity for {business}"
+            body_2 = (
+                f"Hi {first_name},\n\n"
+                f"I wanted to follow up briefly regarding my previous note about expanding {business}'s development capacity.\n\n"
+                f"We would love to share the brief interactive concept we prepared for your team—showing how we can support your upcoming sprint deliverables and AI product initiatives.\n\n"
+                f"If you have 5 minutes this week, let me know what day works best, or feel free to reply with a quick 'send it over'.\n\n"
+                f"Best regards,\nKSV Web & AI Solutions Team"
+            )
                 f"• Flexible White-Label Delivery: Seamless extension to your in-house team under your own brand\n\n"
                 f"🎁 Special Introductory Rate: Because we are expanding our international agency network in {country}, we're offering our first joint sprint at a heavily discounted, minimal flat rate.\n\n"
                 f"Would you be open to a quick 2-minute look at our portfolio and live code architecture?\n\n"
