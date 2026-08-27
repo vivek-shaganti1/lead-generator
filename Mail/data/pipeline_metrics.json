@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-08-27T16:23:09.047743+00:00",
+  "target_revenue_kpi": 1000.0,
+  "target_kpi": 1000.0,
+  "closed_revenue": 0,
+  "weighted_pipeline": 7005.0,
+  "gross_potential_pipeline": 43600.0,
+  "total_potential_pipeline": 43600.0,
+  "target_progress_pct": 0.0,
+  "projected_attainment_pct": 700.5,
+  "reply_rate": 5.3,
+  "counts": {
+    "total_leads": 73,
+    "valid_deliverable_leads": 61,
+    "bounced_leads": 12,
+    "total_emails_sent": 320,
+    "total_replies_received": 17,
+    "hot_replies": 0,
+    "warm_replies": 0,
+    "contacted": 73
+  },
+  "deliverability_rate_pct": 83.6,
+  "geographic_distribution": {
+    "United States": 73
+  },
+  "stage_distribution": {
+    "READY_FOR_OUTREACH": 24,
+    "UNCONTACTED": 21,
+    "EMAIL_1_SENT": 16,
+    "BOUNCED": 12
+  }
+}

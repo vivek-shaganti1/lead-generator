@@ -1,0 +1,108 @@
+# =============================================================================
+#  Lead Generator — ignored artefacts
+# =============================================================================
+
+# ---- secrets ----------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ---- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+sdist/
+wheels/
+*.egg-info/
+*.egg
+.installed.cfg
+MANIFEST
+
+# virtualenvs
+.venv/
+venv/
+env/
+ENV/
+backend/.venv/
+
+# test / coverage / type caches
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.cache/
+.tox/
+.nox/
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+.pyre/
+.ruff_cache/
+
+# ---- databases / local data -------------------------------------------------
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.dump
+*.sql.gz
+
+# ---- Node / Next.js ---------------------------------------------------------
+node_modules/
+.next/
+out/
+.turbo/
+.swc/
+next-env.d.ts
+.eslintcache
+.npm/
+.yarn/
+.pnp.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Docker -----------------------------------------------------------------
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# ---- logs / runtime ---------------------------------------------------------
+*.log
+logs/
+celerybeat-schedule*
+celerybeat.pid
+*.pid
+*.sock
+
+# ---- editors / IDEs ---------------------------------------------------------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-workspace
+
+# ---- OS ---------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
